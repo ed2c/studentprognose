@@ -428,7 +428,7 @@ class DataTotal:
         plt.show()
 
         # Save the plot as a PNG file
-        plot_output_path = os.path.join(self.CWD, 'data', 'output', 'plot.png')
+        plot_output_path = os.path.join(self.CWD, 'data', 'output', f'{filtered_programme}-{self.predict_year}-{self.predict_week}-plot.png')
         plt.savefig(plot_output_path)
         #plt.close()  # Close the plot to free memory
 
