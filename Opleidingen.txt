@@ -1,0 +1,136 @@
+B Algemene Cultuurwetenschappen
+B Artificial Intelligence
+B Bedrijfskunde
+B Bestuurskunde
+B Biology
+B Biomedische Wetenschappen
+B Chemistry
+B Communicatie- en Informatiewetenschappen
+B Communicatiewetenschap
+B Computing Science
+B Culturele Antropologie en Ontwikkelingssociologie
+B Duitse Taal en Cultuur
+B Economie en Bedrijfseconomie
+B English Language and Culture
+B European Law School
+B Filosofie
+B Geneeskunde
+B Geografie, Planologie en Milieu
+B Geschiedenis
+B Griekse en Latijnse Taal en Cultuur
+B Informatiekunde
+B Islam en Arabisch
+B Kunstgeschiedenis
+B Molecular Life Sciences
+B Natuur- en Sterrenkunde
+B Nederlandse Taal en Cultuur
+B Notarieel Recht
+B Pedagogische Wetenschappen
+B Pedagogische Wetenschappen van Primair Onderwijs
+B Politicologie
+B Psychologie
+B Rechtsgeleerdheid
+B Religiewetenschappen
+B Romaanse Talen en Culturen
+B Science
+B Sociologie
+B Taalwetenschap
+B Tandheelkunde
+B Theologie
+B Wiskunde
+M Anthropology and Development Studies
+M Artificial Intelligence
+M Bedrijfscommunicatie
+M Behavioural Science (research)
+M Bestuurskunde
+M Biology
+M Biomedical Sciences
+M Business Administration
+M Chemistry
+M Cognitive Neuroscience (research)
+M Communicatie- & informatiewetenschappen
+M Communicatie- & informatiewetenschappen (research)
+M Communicatiewetenschap
+M Computing Science
+M Curriculumontwikkeling voor Primair Onderwijs
+M Duitse Taal en Cultuur
+M Economics
+M Educatie in de Bètawetenschappen
+M Educatie in de Mens- en Maatschappijwetenschappen
+M Educatie in de Taal- en Cultuurwetenschappen
+M Engelse Taal en Cultuur
+M Environment and Society Studies
+M Environmental Sciences
+M European Law
+M Europese Studies
+M Europese Studies (joint degree)
+M Filosofie
+M Filosofie (research)
+M Fiscaal Recht
+M Geneeskunde
+M Geschiedenis
+M Geschiedenis (research)
+M Griekse en Latijnse Taal en Cultuur
+M Historical, Literary and Cultural Studies (research)
+M Human Geography
+M Information Sciences
+M International and European Law
+M Interreligieuze spiritualiteitsstudies
+M Islam en Arabisch
+M Kunst- & cultuurwetenschappen
+M Kunst- & cultuurwetenschappen (research)
+M Kunstgeschiedenis
+M Leraar Voorbereidend Hoger Onderwijs in Aardrijkskunde
+M Leraar Voorbereidend Hoger Onderwijs in Algemene Economie
+M Leraar Voorbereidend Hoger Onderwijs in Biologie
+M Leraar Voorbereidend Hoger Onderwijs in Duits
+M Leraar Voorbereidend Hoger Onderwijs in Engels
+M Leraar Voorbereidend Hoger Onderwijs in Filosofie
+M Leraar Voorbereidend Hoger Onderwijs in Frans
+M Leraar Voorbereidend Hoger Onderwijs in Geschiedenis en Staatsinrichting
+M Leraar Voorbereidend Hoger Onderwijs in Godsdienst en Levensbeschouwing
+M Leraar Voorbereidend Hoger Onderwijs in Griekse en Latijnse Taal en Cultuur
+M Leraar Voorbereidend Hoger Onderwijs in Kunstgeschiedenis en Culturele en Kunstzinnige Vorming/Kunst Algemeen
+M Leraar Voorbereidend Hoger Onderwijs in Maatschappijleer en Maatschappijwetenschappen
+M Leraar Voorbereidend Hoger Onderwijs in Management en Organisatie
+M Leraar Voorbereidend Hoger Onderwijs in Natuurkunde
+M Leraar Voorbereidend Hoger Onderwijs in Nederlands
+M Leraar Voorbereidend Hoger Onderwijs in Scheikunde
+M Leraar Voorbereidend Hoger Onderwijs in Spaans
+M Leraar Voorbereidend Hoger Onderwijs in Wiskunde
+M Leraar Voorbereidend Hoger Onderwijs in de Bètawetenschappen
+M Leraar Voorbereidend Hoger Onderwijs in de Mens- en Maatschappijwetenschappen
+M Leraar Voorbereidend Hoger Onderwijs in de Taal en Cultuurwetenschappen
+M Letterkunde
+M Letterkunde (research)
+M Linguistics and Communication Sciences (research)
+M Mathematics
+M Medical Biology
+M Molecular Life Sciences
+M Molecular Mechanisms of Disease (research)
+M Molecular Sciences
+M Nederlands Recht
+M Neerlandistiek
+M Noord-Amerika Studies
+M Notarieel Recht
+M Onderneming en Recht (research)
+M Onderwijswetenschappen
+M Oudheidstudies
+M Pedagogische Wetenschappen
+M Physics and Astronomy
+M Political Science
+M Psychologie
+M Religiestudies
+M Romaanse Talen en Culturen
+M Science
+M Social and Cultural Science (research)
+M Sociologie
+M Spatial Planning
+M Taalwetenschappen
+M Taalwetenschappen (research)
+M Tandheelkunde
+M Theologie
+M Theologie & Religiewetenschappen
+M Theology
+M Wijsbegeerte (research)
+M Wijsbegeerte van een Bepaald Wetenschapsgebied

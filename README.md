@@ -1,3 +1,25 @@
+# DEMO NPULS
+
+Beste iedereen! Leuk dat jullie meedoen met de workshop. Hieronder een stukje code die je kunt gebruiken om te runnen. 
+
+Let op:
+
+1) Ga naar het "configuration.json" bestand. Vul daarin een opleiding naar wens in (zie ook het "Opleidingen.txt" bestand). 
+2) Run onderstaande code. 
+3) Zie de output die geplot wordt aan de linkerkant van je codespace (in de folder structuur).
+
+```
+python main.py -y 2023 -w 15 -d c -sy f -p n
+```
+
+Hier onderaan staat een tabel waarin aangegeven staat wat de verschillende onderdelen van deze syntax betekenen. 
+
+### Handleiding Codespace
+https://www.github.com/ed2c/docker_1cho
+
+### Nieuwsbericht Radboud Universiteit
+https://www.voxweb.nl/nieuws/de-universiteit-heeft-nu-haar-eigen-glazen-bol-nieuw-model-voorspelt-toekomstige-instroom-van-studenten
+
 # Student forecasting model
 
 This Python script predicts the influx of students at the Radboud University for the current year and week. The year and week can also be specified.

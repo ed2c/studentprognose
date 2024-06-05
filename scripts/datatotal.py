@@ -374,63 +374,66 @@ class DataTotal:
         with open(config_file_path, 'r') as f:
             config = json.load(f)
         filtered_programme = config["filtering"]["programme"][0]  # Assuming only one programme is filtered
+
+        filtered_programmes = config["filtering"]["programme"]
+        for filtered_programme in filtered_programmes:
         
-        # Filter the data based on the filtered programme
-        data_filtered = self.data[self.data["Croho groepeernaam"] == filtered_programme]
+            # Filter the data based on the filtered programme
+            data_filtered = self.data[self.data["Croho groepeernaam"] == filtered_programme]
 
-        # Define a custom sort key
-        def custom_sort_key(weeknummer):
-            if weeknummer >= 39:
-                return weeknummer - 39
-            else:
-                return weeknummer + 52 - 39
+            # Define a custom sort key
+            def custom_sort_key(weeknummer):
+                if weeknummer >= 39:
+                    return weeknummer - 39
+                else:
+                    return weeknummer + 52 - 39
 
-        # Apply the custom sort key to the DataFrame
-        data_filtered['SortKey'] = data_filtered['Weeknummer'].apply(custom_sort_key)
+            # Apply the custom sort key to the DataFrame
+            data_filtered['SortKey'] = data_filtered['Weeknummer'].apply(custom_sort_key)
 
-        # Sort the DataFrame based on the custom sort key
-        df_sorted = data_filtered.sort_values(by='SortKey').drop(columns='SortKey')
+            # Sort the DataFrame based on the custom sort key
+            df_sorted = data_filtered.sort_values(by='SortKey').drop(columns='SortKey')
 
-        # Group by Weeknummer and sum the aantal_studenten
-        grouped_data = df_sorted.groupby("Weeknummer").agg({"Aantal_studenten": "sum", "SARIMA_cumulative": "sum"}).reset_index()
+            # Group by Weeknummer and sum the aantal_studenten
+            grouped_data = df_sorted.groupby("Weeknummer").agg({"Aantal_studenten": "sum", "SARIMA_cumulative": "sum"}).reset_index()
 
-        # Ensure grouped_data is sorted again by the custom order, though it should already be sorted correctly
-        grouped_data['SortKey'] = grouped_data['Weeknummer'].apply(custom_sort_key)
-        grouped_data = grouped_data.sort_values(by='SortKey').drop(columns='SortKey')
+            # Ensure grouped_data is sorted again by the custom order, though it should already be sorted correctly
+            grouped_data['SortKey'] = grouped_data['Weeknummer'].apply(custom_sort_key)
+            grouped_data = grouped_data.sort_values(by='SortKey').drop(columns='SortKey')
 
-        # Extract necessary columns
-        weeknummers = grouped_data["Weeknummer"]
-        aantal_studenten = grouped_data["Aantal_studenten"]
-        voorspelling = grouped_data["SARIMA_cumulative"]
-        # Show only non-zero
-        voorspelling_nonzero = voorspelling.replace(0, np.nan)
+            # Extract necessary columns
+            weeknummers = grouped_data["Weeknummer"]
+            aantal_studenten = grouped_data["Aantal_studenten"]
+            voorspelling = grouped_data["SARIMA_cumulative"]
+            # Show only non-zero
+            voorspelling_nonzero = voorspelling.replace(0, np.nan)
 
-        # Plotting
-        plt.figure(figsize=(12, 8))
-        plt.plot(range(len(weeknummers)), aantal_studenten, label='Aantal Studenten', marker='o', linestyle='-')
-        plt.plot(range(len(weeknummers)), voorspelling_nonzero, label='Voorspelling', marker='x', linestyle='--')
+            # Plotting
+            plt.figure(figsize=(12, 8))
+            plt.plot(range(len(weeknummers)), aantal_studenten, label='Aantal Studenten', marker='o', linestyle='-')
+            plt.plot(range(len(weeknummers)), voorspelling_nonzero, label='Voorspelling', marker='x', linestyle='--')
 
-        plt.xlabel('Weeknummer')
-        plt.ylabel('Aantal')
-        plt.title(f'Aantal Studenten en Voorspelling per Week - {filtered_programme}')
-        plt.legend()
-        plt.grid(True)
+            plt.xlabel('Weeknummer')
+            plt.ylabel('Aantal')
+            plt.title(f'Aantal Studenten en Voorspelling per Week - {filtered_programme}')
+            plt.legend()
+            plt.grid(True)
 
-        # Set x-ticks to the sorted week numbers
-        plt.xticks(ticks=range(len(weeknummers)), labels=weeknummers)
+            # Set x-ticks to the sorted week numbers
+            plt.xticks(ticks=range(len(weeknummers)), labels=weeknummers)
 
-        # Adjust y-axis limits for a more zoomed-out view
-        ymin = min(min(aantal_studenten), min(voorspelling)) * 0.5
-        ymax = max(max(aantal_studenten), max(voorspelling)) * 1.9
-        plt.ylim(ymin, ymax)
+            # Adjust y-axis limits for a more zoomed-out view
+            ymin = min(min(aantal_studenten), min(voorspelling)) * 0.5
+            ymax = max(max(aantal_studenten), max(voorspelling)) * 1.9
+            plt.ylim(ymin, ymax)
 
-        # Show the plot
-        plt.show()
+            # Show the plot
+            plt.show()
 
-        # Save the plot as a PNG file
-        plot_output_path = os.path.join(self.CWD, 'data', 'output', f'{filtered_programme}-{self.predict_year}-{self.predict_week}-plot.png')
-        plt.savefig(plot_output_path)
-        #plt.close()  # Close the plot to free memory
+            # Save the plot as a PNG file
+            plot_output_path = os.path.join(self.CWD, 'data', 'output', f'{filtered_programme}-{self.predict_year}-{self.predict_week}-plot.png')
+            plt.savefig(plot_output_path)
+            #plt.close()  # Close the plot to free memory
 
         # Save the data to Excel files
         input_output_path = os.path.join(self.CWD, 'data', 'input', 'totaal.xlsx')
