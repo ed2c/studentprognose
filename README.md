@@ -1,3 +1,9 @@
+# Beste landelijke collega's
+
+We zijn druk bezig het script te optimaliseren en te verfijnen. De bugs uit de vorige versie zijn nu weggehaald. Dit is - nagenoeg - de code die wij as-is hanteren. De code is verder aangevuld met documentatie en de README is hieronder verder geüpdatet. Ik heb het testbestand met gepseudonimiseerde data toegevoegd zodat daarmee getest kan worden. Let wel: het cumulatieve gedeelte kan alleen aangeroepen worden hiermee. 
+
+Binnenkort (mochten we daar tijd voor kunnen maken) komen we met een betere omschrijving van het 'individuele' bestand. Wordt vervolgd!!!!!!! FEEDBACK IS WELKOM!!!!
+
 # Student forecasting model
 
 This Python script predicts the influx of students at the Radboud University for the current year and week. The year and week can also be specified.
