@@ -1,0 +1,10 @@
+#!/bin/bash
+
+# Run the test
+if ! make test-eb; then
+    echo "Tests failed. Push aborted."
+    exit 1
+fi
+
+# If the test succeeds, allow the push to proceed
+exit 0

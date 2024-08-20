@@ -1,22 +1,22 @@
 {
     "paths": {
-        "path_cumulative": "/workspaces/studentprognose/data/input/vooraanmeldingen_cumulatief.csv",
-        "path_individual": "/workspaces/studentprognose/data/input/vooraanmeldingen_individueel.csv",
-        "path_latest": "/workspaces/studentprognose/data/input/totaal.xlsx",
-        "path_distances": "/workspaces/studentprognose/data/input/afstanden.xlsx",
-        "path_weighted_ensemble": "/workspaces/studentprognose/data/input/ensemble_weights.xlsx",
-        "path_october": "/workspaces/studentprognose/data/input/Feiten_en_Cijfers_Studentenaantallen_20231002.xlsx",
-        "path_student_count_first-years": "/workspaces/studentprognose/data/input/student_count_first-years.xlsx",
-        "path_student_count_higher-years": "/workspaces/studentprognose/data/input/student_count_higher-years.xlsx",
-        "path_student_volume": "/workspaces/studentprognose/data/input/student_volume.xlsx"
+        "path_cumulative": "\\\\ru.nl\\wrkgrp\\TeamIR\\Man_info\\Student Analytics\\Prognosemodel RU\\Syntax\\Python\\studentprognose\\data\\input\\vooraanmeldingen_cumulatief.csv",
+        "path_individual": "\\\\ru.nl\\wrkgrp\\TeamIR\\Man_info\\Student Analytics\\Prognosemodel RU\\Syntax\\Python\\studentprognose\\data\\input\\vooraanmeldingen_individueel.csv",
+        "path_latest": "\\\\ru.nl\\wrkgrp\\TeamIR\\Man_info\\Student Analytics\\Prognosemodel RU\\Syntax\\Python\\studentprognose\\data\\input\\totaal.xlsx",
+        "path_distances": "\\\\ru.nl\\wrkgrp\\TeamIR\\Man_info\\Student Analytics\\Prognosemodel RU\\Syntax\\Python\\studentprognose\\data\\input\\afstanden.xlsx",
+        "path_weighted_ensemble": "\\\\ru.nl\\wrkgrp\\TeamIR\\Man_info\\Student Analytics\\Prognosemodel RU\\Syntax\\Python\\studentprognose\\configuration\\ensemble_weights.xlsx",
+        "path_october": "\\\\ru.nl\\wrkgrp\\Centraal-bestanden-delen\\1-oktobercijfers\\Feiten_en_Cijfers_Studentenaantallen_20231002.xlsx",
+        "path_student_count_first-years": "\\\\ru.nl\\wrkgrp\\TeamIR\\Man_info\\Student Analytics\\Prognosemodel RU\\Syntax\\Python\\studentprognose\\data\\input\\student_count_first-years_inclusief_pre-master.xlsx",
+        "path_student_count_higher-years": "\\\\ru.nl\\wrkgrp\\TeamIR\\Man_info\\Student Analytics\\Prognosemodel RU\\Syntax\\Python\\studentprognose\\data\\input\\student_count_higher-years.xlsx",
+        "path_student_volume": "\\\\ru.nl\\wrkgrp\\TeamIR\\Man_info\\Student Analytics\\Prognosemodel RU\\Syntax\\Python\\studentprognose\\data\\input\\student_volume.xlsx"
     },
     "numerus_fixus": {
-        "B Artificial Intelligence": 67,
-        "B Notarieel Recht": 220,
-        "B Geschiedenis": 100,
-        "B Psychologie": 330,
-        "B Islam en Arabisch": 600,
-        "B Tandheelkunde": 200
+        "B Artificial Intelligence": 200,
+        "B Biology": 220,
+        "B Biomedische Wetenschappen": 100,
+        "B Geneeskunde": 330,
+        "B Psychologie": 600,
+        "B Tandheelkunde": 67
     },
     "columns": {
         "individual": {
@@ -70,11 +70,14 @@
             "Inschrijvingen": "Inschrijvingen"
         }
     },
-    "filtering": {
-        "programme": [
-             
-        ],
-        "herkomst": [
-        ]
+    "faculty": {
+        "LET": "FdL",
+        "SOW": "FSW",
+        "RU": "FdM",
+        "MAN": "FdM",
+        "NWI": "FNWI",
+        "MED": "FMW",
+        "FTR": "FFTR",
+        "JUR": "FdR"
     }
 }

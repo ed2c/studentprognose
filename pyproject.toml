@@ -1,0 +1,21 @@
+[tool.poetry]
+name = "dependencies_studentprognose"
+version = "0.1.0"
+description = ""
+authors = ["Your Name <you@example.com>"]
+readme = "README.md"
+
+[tool.poetry.dependencies]
+python = "^3.12"
+pandas = "^2.2.2"
+tqdm = "^4.66.5"
+xgboost = "^2.1.1"
+scikit-learn = "^1.5.1"
+statsmodels = "^0.14.2"
+openpyxl = "^3.1.5"
+pre-commit = "^3.8.0"
+
+
+[build-system]
+requires = ["poetry-core"]
+build-backend = "poetry.core.masonry.api"

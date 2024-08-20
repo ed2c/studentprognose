@@ -3,11 +3,13 @@ import sys
 from enum import Enum
 
 from scripts.load_data import *
-from scripts.availabledata import *
-from scripts.individual import *
-from scripts.cumulative import *
-from scripts.bothdatasets import *
-from scripts.dataoption import *
+from scripts.dataholder.superclass import *
+from scripts.dataholder.individual import *
+from scripts.dataholder.cumulative import *
+from scripts.dataholder.bothdatasets import *
+from scripts.higher_years import *
+from scripts.helper import DataOption, StudentYearPrediction
+
 
 class Main:
     def __init__(self, arguments):
@@ -19,8 +21,9 @@ class Main:
         YEARS = 2
         DATASETS = 3
         CONFIGURATION = 4
-        STUDENT_YEAR_PREDICTION = 5
-        POST_PROCESS = 6
+        FILTERING = 5
+        STUDENT_YEAR_PREDICTION = 6
+        SKIP_YEARS = 7
 
     def _parse_arguments(self, arguments):
         cmd_arg = Main.Cmd.NO_ARG
@@ -31,8 +34,9 @@ class Main:
         self.year_slice = False
         self.data_option = DataOption.BOTH_DATASETS
         self.configuration_path = "configuration/configuration.json"
+        self.filtering_path = "configuration/filtering/base.json"
         self.student_year_prediction = StudentYearPrediction.FIRST_YEARS
-        self.postprocess_subset = PostProcessSubset.ALL
+        self.skip_years = 0
 
         try:
             # First arguments is always the name of the python script
@@ -73,6 +77,11 @@ class Main:
                     else:
                         raise Exception("Configuration path does not exist")
                     cmd_arg = Main.Cmd.NO_ARG
+                elif cmd_arg == Main.Cmd.FILTERING:
+                    if os.path.exists(arg):
+                        self.filtering_path = arg
+                    else:
+                        raise Exception("Configuration path does not exist")
                 elif cmd_arg == Main.Cmd.STUDENT_YEAR_PREDICTION:
                     if arg == "f" or arg == "first-years":
                         self.student_year_prediction = StudentYearPrediction.FIRST_YEARS
@@ -83,14 +92,9 @@ class Main:
                     elif arg == "v" or arg == "volume":
                         self.student_year_prediction = StudentYearPrediction.VOLUME
                         cmd_arg = Main.Cmd.NO_ARG
-                elif cmd_arg == Main.Cmd.POST_PROCESS:
-                    if arg == "a" or arg == "all":
-                        self.postprocess_subset = PostProcessSubset.ALL
-                        cmd_arg = Main.Cmd.NO_ARG
-                    if arg == "n" or arg == "new":
-                        self.postprocess_subset = PostProcessSubset.NEW
-                        cmd_arg = Main.Cmd.NO_ARG
-
+                elif cmd_arg == Main.Cmd.SKIP_YEARS and arg.isnumeric():
+                    self.skip_years = int(arg)
+                    cmd_arg = Main.Cmd.NO_ARG
 
                 if arg == "-w" or arg == "-W" or arg == "-week":
                     cmd_arg = Main.Cmd.WEEKS
@@ -100,13 +104,16 @@ class Main:
                     cmd_arg = Main.Cmd.DATASETS
                 elif arg == "-c" or arg == "-C" or arg == "-configuration":
                     cmd_arg = Main.Cmd.CONFIGURATION
+                elif arg == "-f" or arg == "-F" or arg == "-filtering":
+                    cmd_arg = Main.Cmd.FILTERING
                 elif arg == "-sy" or arg == "-SY" or arg == "-studentyear":
                     cmd_arg = Main.Cmd.STUDENT_YEAR_PREDICTION
-                elif arg == "-p" or arg == "-P" or arg == "-postprocess":
-                    cmd_arg = Main.Cmd.POST_PROCESS
+                elif arg == "-sk" or arg == "-SK" or arg == "-skipyears":
+                    cmd_arg = Main.Cmd.SKIP_YEARS
         except:
-            print("Something went wrong while parsing the arguments, read the README.md for usage.")
-
+            print(
+                "Something went wrong while parsing the arguments, read the README.md for usage."
+            )
 
         weeks_specified = True
         if self.weeks == []:
@@ -121,85 +128,192 @@ class Main:
 
         if self.years == []:
             current_year = datetime.date.today().year
-            
+
             if not weeks_specified and self.weeks[0] >= 40:
                 current_year += 1
 
             self.years = [current_year]
 
     def run(self):
+
+        # Make sure that the output files are closed. Otherwise the program will crash when
+        # it tries to write to these files.
+        try:
+            open("data/output/output_prelim.xlsx", "w")
+
+            if "test" not in self.filtering_path:
+                match self.student_year_prediction:
+                    case StudentYearPrediction.FIRST_YEARS:
+                        open("data/output/output_first-years.xlsx", "w")
+                    case StudentYearPrediction.HIGHER_YEARS:
+                        open("data/output/output_higher-years.xlsx", "w")
+                    case StudentYearPrediction.VOLUME:
+                        open("data/output/output_volume.xlsx", "w")
+
+        except IOError:
+            input(
+                "Could not open output files because they are (probably) opened by another process. Please close Excel. Press Enter to continue."
+            )
+
         print("Predicting for years: ", self.years, " and weeks: ", self.weeks)
 
         # Load configuration
         print("Loading configuration...")
         self.configuration = load_configuration(self.configuration_path)
+        self.filtering = load_configuration(self.filtering_path)
 
         # Load data
         print("Loading data...")
-        self.data_individual, self.data_cumulative, self.data_studentcount, self.data_latest, self.data_distances, self.ensemble_weights = load_data(self.configuration, self.student_year_prediction)
+        (
+            self.data_individual,
+            self.data_cumulative,
+            self.data_student_numbers_first_years,
+            self.data_student_numbers_higher_years,
+            self.data_student_numbers_volume,
+            self.data_latest,
+            self.data_distances,
+            self.ensemble_weights,
+        ) = load_data(self.configuration)
+
+        CWD = os.path.dirname(os.path.abspath(__file__))
+        helpermethods_initialise_material = [
+            self.data_latest,
+            self.ensemble_weights,
+            self.data_student_numbers_first_years,
+            CWD,
+            self.data_option,
+        ]
 
         # Initialize dataholder
         self.dataholder = None
-        if self.data_option == DataOption.BOTH_DATASETS:
+        if self.skip_years > 0 or self.data_option == DataOption.CUMULATIVE:
+            if self.data_cumulative is None:
+                raise Exception("Cumulative dataset not found")
+            self.dataholder = Cumulative(
+                self.data_cumulative,
+                self.data_student_numbers_first_years,
+                self.configuration,
+                helpermethods_initialise_material,
+            )
+        elif self.data_option == DataOption.BOTH_DATASETS:
             if self.data_individual is None:
                 raise Exception("Individual dataset not found")
             if self.data_cumulative is None:
                 raise Exception("Cumulative dataset not found")
-            self.dataholder = BothDatasets(self.data_individual, self.data_cumulative, self.data_distances, self.data_studentcount, self.configuration, self.student_year_prediction)
+            self.dataholder = BothDatasets(
+                self.data_individual,
+                self.data_cumulative,
+                self.data_distances,
+                self.data_student_numbers_first_years,
+                self.configuration,
+                helpermethods_initialise_material,
+            )
         elif self.data_option == DataOption.INDIVIDUAL:
             if self.data_individual is None:
                 raise Exception("Individual dataset not found")
-            self.dataholder = Individual(self.data_individual, self.data_distances, self.configuration)
-        elif self.data_option == DataOption.CUMULATIVE:
-            if self.data_cumulative is None:
-                raise Exception("Cumulative dataset not found")
-            self.dataholder = Cumulative(self.data_cumulative, self.data_studentcount, self.configuration, self.student_year_prediction)
+            self.dataholder = Individual(
+                self.data_individual,
+                self.data_distances,
+                self.configuration,
+                helpermethods_initialise_material,
+            )
 
-        # Preprocess data
-        print("Preprocessing...")
-        self.data_cumulative = self.dataholder.preprocess()
+        self.higher_years_dataholder = HigherYears(
+            self.data_student_numbers_first_years,
+            self.data_student_numbers_higher_years,
+            self.data_student_numbers_volume,
+            self.configuration,
+        )
 
-        # Initialize data total class
-        CWD = os.path.dirname(os.path.abspath(__file__))
-        self.dataholder.data_total.initialize(self.data_latest, self.ensemble_weights, self.data_studentcount, self.configuration, CWD)
+        if (
+            self.student_year_prediction == StudentYearPrediction.FIRST_YEARS
+            or self.student_year_prediction == StudentYearPrediction.VOLUME
+        ):
+            # Preprocess data
+            print("Preprocessing...")
+            self.data_cumulative = self.dataholder.preprocess()
+
+        if self.student_year_prediction == StudentYearPrediction.HIGHER_YEARS:
+            self.dataholder.helpermethods.data = self.dataholder.helpermethods.data_latest[
+                [
+                    "Croho groepeernaam",
+                    "Collegejaar",
+                    "Herkomst",
+                    "Weeknummer",
+                    "SARIMA_cumulative",
+                    "SARIMA_individual",
+                    "Voorspelde vooraanmelders",
+                    "Aantal_studenten",
+                    "Faculteit",
+                    "Examentype",
+                    "Gewogen vooraanmelders",
+                    "Ongewogen vooraanmelders",
+                    "Aantal aanmelders met 1 aanmelding",
+                    "Inschrijvingen",
+                    "Weighted_ensemble_prediction",
+                ]
+            ]
 
         # Set programme and origin filtering
-        self.dataholder.set_filtering(self.configuration["filtering"]["programme"], self.configuration["filtering"]["herkomst"])
+        self.dataholder.set_filtering(
+            self.filtering["filtering"]["programme"],
+            self.filtering["filtering"]["herkomst"],
+        )
 
         for year in self.years:
             for week in self.weeks:
-                # Run SARIMA models
-                if self.student_year_prediction == StudentYearPrediction.VOLUME:
-                    data_to_predict, predicted_data_first_years = self.dataholder.predict_nr_of_students(year, week, StudentYearPrediction.FIRST_YEARS)
+                # Predict first years student based on settings
+                if (
+                    self.student_year_prediction == StudentYearPrediction.FIRST_YEARS
+                    or self.student_year_prediction == StudentYearPrediction.VOLUME
+                ):
+                    print(f"Predicting first-years: {year}-{week}...")
+                    data_to_predict = self.dataholder.predict_nr_of_students(
+                        year, week, self.skip_years
+                    )
                     if data_to_predict is None:
                         continue
-                    data_first_years = self.dataholder.data_total.append_predicted_data(data_to_predict, predicted_data_first_years, StudentYearPrediction.FIRST_YEARS)
+                    self.dataholder.helpermethods.prepare_data_for_output_prelim(
+                        data_to_predict, self.data_cumulative, self.skip_years
+                    )
 
-                    data_to_predict, predicted_data_higher_years = self.dataholder.predict_nr_of_students(year, week, StudentYearPrediction.HIGHER_YEARS)
-                    if data_to_predict is None:
-                        continue
-                    data_higher_years = self.dataholder.data_total.append_predicted_data(data_to_predict, predicted_data_higher_years, StudentYearPrediction.HIGHER_YEARS)
+                    if (
+                        self.data_option == DataOption.CUMULATIVE
+                        or self.data_option == DataOption.BOTH_DATASETS
+                    ):
+                        # Run ratio model
+                        self.dataholder.helpermethods.predict_with_ratio(
+                            self.data_cumulative, year
+                        )
 
-                    data = calculate_volume_predicted_data(data_first_years, data_higher_years, year, week)
-                else:
-                    data_to_predict, predicted_data = self.dataholder.predict_nr_of_students(year, week, self.student_year_prediction)
-                    if data_to_predict is None:
-                        continue
-                    data = self.dataholder.data_total.append_predicted_data(data_to_predict, predicted_data, self.student_year_prediction)
-                
-                self.dataholder.data_total.prepare_data(data, self.data_cumulative)
+                    # Post process
+                    print("Postprocessing...")
+                    self.dataholder.helpermethods.postprocess(year, week)
 
-                if self.data_option == DataOption.CUMULATIVE or self.data_option == DataOption.BOTH_DATASETS:
-                    # Run ratio model
-                    self.dataholder.data_total.predict_with_ratio(self.data_cumulative)
+                # Predicting higher years students and/or volume based on settings
+                if (
+                    self.student_year_prediction == StudentYearPrediction.HIGHER_YEARS
+                    or self.student_year_prediction == StudentYearPrediction.VOLUME
+                ):
+                    print(f"Predicting higher-years: {year}-{week}...")
+                    self.dataholder.helpermethods.data = (
+                        self.higher_years_dataholder.predict_nr_of_students(
+                            self.dataholder.helpermethods.data,
+                            self.dataholder.helpermethods.data_latest,
+                            year,
+                            week,
+                            self.skip_years,
+                        )
+                    )
 
-                # Post process
-                print("Postprocessing...")
-                self.dataholder.data_total.postprocess(self.postprocess_subset, year, week)
+                self.dataholder.helpermethods.ready_new_data()
 
-                # Save final output
-                print("Saving output...")
-                self.dataholder.data_total.save_output()
+        # Save final output
+        if (
+            "test" not in self.filtering_path
+        ):  # We do this to ensure faster testing times for fast setups
+            print("Saving output...")
+            self.dataholder.helpermethods.save_output(self.student_year_prediction)
 
 
 if __name__ == "__main__":
