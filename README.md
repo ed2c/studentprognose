@@ -1,8 +1,14 @@
 # Beste landelijke collega's
 
-We zijn druk bezig het script te optimaliseren en te verfijnen. De bugs uit de vorige versie zijn nu weggehaald. Dit is - nagenoeg - de code die wij as-is hanteren. De code is verder aangevuld met documentatie en de README is hieronder verder geüpdatet. Ik heb het testbestand met gepseudonimiseerde data toegevoegd zodat daarmee getest kan worden. Let wel: het cumulatieve gedeelte kan alleen aangeroepen worden hiermee. 
+Het is ieder jaar weer een spannend moment: Hoeveel studenten stonden er bij jou voor de deur van het lokaal in de eerste week van september? En hoe ziet de 1 oktober telling eruit voor je gehele instelling? 
 
-Binnenkort (mochten we daar tijd voor kunnen maken) komen we met een betere omschrijving van het 'individuele' bestand. Wordt vervolgd!!!!!!! FEEDBACK IS WELKOM!!!!
+Hoewel, spannend.. we kunnen dit ook voorspellen! Het doel van de instroomprognose is in vroeg stadium te voorspellen hoeveel studenten er komend jaar per opleiding instromen. Op 29 oktober 2024 deelden Amir Khodaie en Timo Koster de [evaluaties van hun instroomprognoses](https://community-data-ai.npuls.nl/groups/view/44d20066-53a8-48c2-b4e9-be348e05d273/project-center-for-educational-data-analytics-ceda/events/view/610c71bd-5859-4092-906c-58bbfdf9801c/instroomprognose-terugblik-en-vooruit-kijken), de sessie opgenomen, laat via Corneel den Hartogh (corneel.denhartogh@surf.nl) weten als je deze terug wilt kijken. Of lees een [interview](https://www.voxweb.nl/nieuws/de-universiteit-heeft-nu-haar-eigen-glazen-bol-nieuw-model-voorspelt-toekomstige-instroom-van-studenten) met Amir over het model.
+
+Wil je meedenken? Meld je vooral aan voor de [werkgroep](https://edu.nl/6d69d).
+
+Dankzij jullie eerdere feedback hebben we de code verbeterd en aangevuld met documentatie. En we hebben een testbestand met gepseudonimiseerde data toegevoegd zodat daarmee getest kan worden. Let wel: Dit is alleen voor het cumulatieve model (zie onder). De volgende stap is script te maken dat ruwe Studielink telbestanden transformeert naar de cumulatieve data zoals die nu in het model gaat. Ook komen we met een betere omschrijving van het 'individuele' bestand. 
+
+Wordt vervolgd! 
 
 # Student forecasting model
 
