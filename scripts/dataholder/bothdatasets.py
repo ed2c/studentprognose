@@ -13,15 +13,27 @@ class BothDatasets(Superclass):
         data_studentcount,
         configuration,
         helpermethods_initialise_material,
+        years,
     ):
         super().__init__(configuration, helpermethods_initialise_material)
 
+        # Initialize the individual and cumulative datasets
         self.individual = Individual(
             data_individual, data_distances, configuration, helpermethods_initialise_material
         )
         self.cumulative = Cumulative(
             data_cumulative, data_studentcount, configuration, helpermethods_initialise_material
         )
+
+        # Check if the selected years are present in the individual dataset
+        if not all(
+            year in self.individual.data_individual["Collegejaar"].unique() for year in years
+        ):
+            raise ValueError(
+                f"Selected years {years} not found in individual dataset. Proceeding with cumulative dataset."
+            )
+        # Set the years
+        self.years = years
 
     def preprocess(self):
         print("Preprocessing individual data...")
@@ -132,7 +144,7 @@ class BothDatasets(Superclass):
             ]
 
         if len(data_to_predict) == 0:
-            return None, None
+            return None
 
         # Split the DataFrame into smaller chunks for parallel processing
         nr_CPU_cores = os.cpu_count()
@@ -165,6 +177,11 @@ class BothDatasets(Superclass):
             )
 
         # Predict the SARIMA_cumulative and add it to the dataframe.
+
+        # data_to_predict = self.cumulative.predict_students_with_preapplicants(
+        #    full_data, [x[1] for x in self.predicted_data], data_to_predict
+        # )
+
         data_to_predict = self.cumulative.predict_students_with_preapplicants(
             full_data, [x[1] for x in self.predicted_data], data_to_predict
         )

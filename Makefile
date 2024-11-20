@@ -1,31 +1,22 @@
 .PHONY: install
 
-install:
+poetry:
+	pip install poetry
+	poetry install
+
+start:
 	pre-commit install
 	python hooks/run_bash.py
-	poetry install
 	poetry shell
 
-test-eb:	# eb <- exhaustive both
-	@echo "Testing both datasets exhaustive. This will take appr. 165 seconds."
-	python tests/exhaustive/test_both.py
+test-all:
+	@echo "Running all the unittests."
+	python -m unittest tests.test_all.TestAll.test_run_all
 
-test-ec:	# ec <- exhaustive cumulative
-	@echo "Testing the cumulative datasets exhaustive. This will take appr. 120 seconds."
-	python tests/exhaustive/test_cumulative.py
+test-sarima:
+	@echo "Testing the SARIMA predictions for both datasets. This will take appr. 160 seconds."
+	python -m unittest tests.test_sarima.TestAll.test_sarima
 
-test-ei:	# ei <- exhaustive individual
-	@echo "Testing the individual datasets exhaustive. This will take appr. 80 seconds."
-	python tests/exhaustive/test_individual.py
-
-test-fb:	# fb <- fast both
-	@echo "Testing both datasets fast. This will take appr. 100 seconds."
-	python tests/fast/test_fast_both.py
-
-test-fc:	# fc <- fast cumulative
-	@echo "Testing the cumulative datasets fast. This will take appr. 70 seconds."
-	python tests/fast/test_fast_cumulative.py
-
-test-fi:	# fi <- fast individual
-	@echo "Testing the individual datasets fast. This will take appr. 75 seconds."
-	python tests/fast/test_fast_individual.py
+vm:
+	@echo "Creating a virtual machine for the project."
+	az network bastion rdp --enable-mfa true --name bas-irrekencapaciteit-net --resource-group rg-irrekencapaciteit-network --target-resource-id /subscriptions/903a8ea8-505d-4c45-a478-ab6649cb9e72/resourceGroups/rg-irrekencapaciteit-vms/providers/Microsoft.Compute/virtualMachines/vm-win1

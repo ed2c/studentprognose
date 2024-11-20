@@ -19,6 +19,8 @@ import itertools
 import warnings
 from statsmodels.tools.sm_exceptions import ConvergenceWarning
 
+# from scripts.interpolate import interpolate
+
 warnings.simplefilter("ignore", ConvergenceWarning)
 
 
@@ -54,6 +56,13 @@ class Cumulative(Superclass):
         # Set cumulative data to small variable name for reading with more ease
         data = self.data_cumulative
 
+        # We cast the string numbers to floats to be able do perform calculations with these
+        # numbers.
+        data = self._cast_string_to_float(data, "Ongewogen vooraanmelders")
+        data = self._cast_string_to_float(data, "Gewogen vooraanmelders")
+        data = self._cast_string_to_float(data, "Aantal aanmelders met 1 aanmelding")
+        data = self._cast_string_to_float(data, "Inschrijvingen")
+
         # Rename certain columns to match columns of data individual
         data = data.rename(
             columns={
@@ -64,13 +73,6 @@ class Cumulative(Superclass):
 
         # We filter out the higher year students because we only want to first years.
         data = data[data["Hogerejaars"] == "Nee"]
-
-        # We cast the string numbers to floats to be able do perform calculations with these
-        # numbers.
-        data = self._cast_string_to_float(data, "Ongewogen vooraanmelders")
-        data = self._cast_string_to_float(data, "Gewogen vooraanmelders")
-        data = self._cast_string_to_float(data, "Aantal aanmelders met 1 aanmelding")
-        data = self._cast_string_to_float(data, "Inschrijvingen")
 
         data = (
             data.groupby(
@@ -139,6 +141,10 @@ class Cumulative(Superclass):
         self.data_cumulative = self.data_cumulative_backup.copy(deep=True)
         self.set_year_week(predict_year, predict_week, self.data_cumulative)
         self.prepare_data()
+        self.data_cumulative = self.data_cumulative.astype(
+            {"Weeknummer": "int32", "Collegejaar": "int32"}
+        )
+
         full_data = self.get_transformed_data(self.data_cumulative.copy(deep=True))
         full_data["39"] = 0
 
@@ -150,14 +156,26 @@ class Cumulative(Superclass):
             (self.data_cumulative["Collegejaar"] == self.predict_year)
             & (self.data_cumulative["Weeknummer"] == self.predict_week)
         ]
+
+        print("DATA TO PREDICT 1")
+        print(data_to_predict)
+        print(self.programme_filtering)
         if self.programme_filtering != []:
             data_to_predict = data_to_predict[
                 (data_to_predict["Croho groepeernaam"].isin(self.programme_filtering))
             ]
+        print("DATA TO PREDICT 1.5")
+        print(data_to_predict)
         if self.herkomst_filtering != []:
             data_to_predict = data_to_predict[
                 (data_to_predict["Herkomst"].isin(self.herkomst_filtering))
             ]
+
+        print("DATA TO PREDICT 2")
+        print(data_to_predict)
+
+        if len(data_to_predict) == 0:
+            return None
 
         # Split the DataFrame into smaller chunks for parallel processing
         nr_CPU_cores = os.cpu_count()
@@ -176,6 +194,9 @@ class Cumulative(Superclass):
             for chunk in chunks
             for _, row in chunk.iterrows()
         )
+
+        print("Predicted data")
+        print(self.predicted_data)
 
         # Create two new columns with NaN values. 'Voorspelde vooraanmelders' is just predicted
         # and stored in predicted_data. This will be added with 'add_predicted_preregistrations()'.
@@ -214,13 +235,17 @@ class Cumulative(Superclass):
         self.data_cumulative["ts"] = (
             self.data_cumulative["Gewogen vooraanmelders"] + self.data_cumulative["Inschrijvingen"]
         )
+        print("PREPARED DATA")
+        print(self.data_cumulative)
 
         self.data_cumulative = self.data_cumulative.drop_duplicates()
 
+        """
         # Change faculty codes
         self.data_cumulative["Faculteit"] = self.data_cumulative["Faculteit"].replace(
             self.faculty_transformation,
         )
+        """
 
         if int(self.predict_week) > 38:
             self.pred_len = 38 + 52 - int(self.predict_week)
@@ -232,7 +257,12 @@ class Cumulative(Superclass):
         data = data[data["Collegejaar"] >= 2016]
 
         # Makes a certain pivot_wider where it transforms the data from long to wide
+        pd.set_option("display.max_columns", None)
+        print(data)
         data = transform_data(data, "ts")
+        # data = transform_data(data, "Gewogen vooraanmelders")
+        # print("TRANSFORMED DATA")
+        # print(data)
         return data
 
     def predict_with_sarima(self, row, already_printed=False):
@@ -262,6 +292,9 @@ class Cumulative(Superclass):
         gc.collect()
 
         # Transform data i.a. from long to wide
+        self.data_cumulative = self.data_cumulative.astype(
+            {"Weeknummer": "int32", "Collegejaar": "int32"}
+        )
         data = self.get_transformed_data(self.data_cumulative.copy(deep=True))
 
         data = data[
@@ -547,7 +580,8 @@ class Cumulative(Superclass):
         return predictions
 
 
-"""The SARIMAXWrapper method and class is not used anymore because we hardcoded the parameters of
+"""
+The SARIMAXWrapper method and class is not used anymore because we hardcoded the parameters of
 the SARIMA model. The search for the best parameter values didn't work as good as expected. We
 won't delete the code yet for in case we wan't to revise it.
 def _random_search_sarima(self, ts_data):

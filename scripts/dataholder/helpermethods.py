@@ -22,16 +22,7 @@ class HelperMethods:
         self.CWD = helpermethods_initialise_material[3]
 
         self.data_option = helpermethods_initialise_material[4]
-
-    # Should be merged into __init__()
-    def initialize(self, data_latest, ensemble_weights, data_studentcount, configuration, CWD):
-        self.data_latest = data_latest
-        self.ensemble_weights = ensemble_weights
-        self.data_studentcount = data_studentcount
-
-        self.numerus_fixus_list = configuration["numerus_fixus"]
-
-        self.CWD = CWD
+        self.data = None
 
     # This method used when calculating the cumulative value. The input is the data_to_predict
     # this method adds for every row the 'Voorspelde vooraanmelders' until week 38. It also adds
@@ -132,7 +123,6 @@ class HelperMethods:
     # rest it is only merging some dataframes, removing columns and replacing faculty codes.
     def prepare_data_for_output_prelim(self, data, data_cumulative=None, skip_years=0):
         self.data = data
-
         self.data = self._numerus_fixus_cap(self.data)
 
         # We will remove redundant columns we don't want in our output_prelim.
@@ -186,7 +176,7 @@ class HelperMethods:
     # in every calender week and the actual influx of students and it takes the average of the
     # relevant ratio of every year since 2021.
     def predict_with_ratio(self, data_cumulative, predict_year):
-        average_ratio_between = (2021, predict_year - 1)
+        average_ratio_between = (predict_year - 3, predict_year - 1)
         if self.data_studentcount is not None:
             data_vooraanmeldingen = data_cumulative[
                 [
@@ -489,4 +479,11 @@ class HelperMethods:
         output_filename += ".xlsx"
 
         output_path = os.path.join(self.CWD, "data", "output", output_filename)
+
+        self.data.sort_values(
+            by=["Croho groepeernaam", "Examentype", "Collegejaar", "Weeknummer", "Herkomst"],
+            inplace=True,
+            ignore_index=True,
+        )
+
         self.data.to_excel(output_path, index=False)

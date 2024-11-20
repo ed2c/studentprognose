@@ -3,6 +3,7 @@ import pandas as pd
 from sklearn.preprocessing import OneHotEncoder
 from sklearn.compose import ColumnTransformer
 from xgboost import XGBRegressor
+import os
 
 
 class HigherYears:
@@ -11,12 +12,20 @@ class HigherYears:
         data_student_numbers_first_years,
         data_student_numbers_higher_years,
         data_student_numbers_volume,
+        data_individual,
         configuration,
+        data_october,
+        data_ratios,
+        CWD,
     ):
         self.data_student_numbers_first_years = data_student_numbers_first_years
         self.data_student_numbers_higher_years = data_student_numbers_higher_years
         self.data_student_numbers_volume = data_student_numbers_volume
+        self.data_individual = data_individual
         self.numerus_fixus_list = configuration["numerus_fixus"]
+        self.data_october = data_october
+        self.data_ratios = data_ratios
+        self.CWD = CWD
 
     def predict_nr_of_students(
         self, first_year_data, all_data, predict_year, predict_week, skip_years
@@ -35,10 +44,6 @@ class HigherYears:
             pd.DataFrame: A DataFrame including the higher_year and volume predictions and MAE en
             MAPE error.
         """
-
-        # data_student_numbers_first_years = self.data_student_numbers_first_years.copy(deep=True)
-        # data_student_numbers_higher_years = self.data_student_numbers_higher_years.copy(deep=True)
-        # data_student_numbers_volume = self.data_student_numbers_volume.copy(deep=True)
 
         self.predict_year = predict_year
         self.predict_week = predict_week
@@ -122,7 +127,7 @@ class HigherYears:
         # Merge the first year data with the higher years.
         combined_data_student_numbers = data_student_numbers_first_years.merge(
             self.data_student_numbers_higher_years,
-            on=["Croho groepeernaam", "Herkomst", "Collegejaar"],
+            on=["Croho groepeernaam", "Herkomst", "Collegejaar", "Examentype"],
             how="left",
         )
 
@@ -136,6 +141,26 @@ class HigherYears:
         )
 
         self.data_student_numbers_first_years = data_student_numbers_first_years
+
+        def get_herkomst(nat, eer):
+            if nat == "Nederlandse":
+                return "NL"
+            elif nat != "Nederlandse" and eer == "J":
+                return "EER"
+            else:
+                return "Niet-EER"
+
+        self.data_individual["Herkomst"] = self.data_individual.apply(
+            lambda x: get_herkomst(x["Nationaliteit"], x["EER"]), axis=1
+        )
+
+        self.data_individual["Examentype"] = self.data_individual["Examentype"].replace(
+            "Propedeuse Bachelor", "Bachelor"
+        )
+        self.data_individual = self.data_individual[
+            self.data_individual["Examentype"].isin(["Bachelor", "Master", "Pre-master"])
+        ]
+
         return combined_data_student_numbers
 
     def predict_with_ratio(self, combined_data_student_numbers):
@@ -154,7 +179,6 @@ class HigherYears:
             ratio_data["Aantal_studenten_f"]
         )
         ratio_data["Ratio"] = ratio_data["Ratio"].replace(np.inf, np.nan)
-        # ratio_data[ratio_data["Croho groepeernaam"] == "M Geneeskunde"]
 
         ratio = (
             ratio_data[["Croho groepeernaam", "Herkomst", "Ratio", "Examentype"]]
@@ -172,6 +196,7 @@ class HigherYears:
         all_examtypes = [
             "Bachelor",
             "Master",
+            "Pre-master",
         ]  # Pre-master is not yet added to student_count_higher-years.xlsx
 
         for nf_programme in self.numerus_fixus_list:
@@ -252,14 +277,17 @@ class HigherYears:
         for _, row in test.iterrows():
             programme = row["Croho groepeernaam"]
             origin = row["Herkomst"]
+            examtype = row["Examentype"]
             first_year_row = self.data_student_numbers_first_years[
                 (self.data_student_numbers_first_years["Croho groepeernaam"] == programme)
                 & (self.data_student_numbers_first_years["Herkomst"] == origin)
                 & (self.data_student_numbers_first_years["Collegejaar"] == self.predict_year)
+                & (self.data_student_numbers_first_years["Examentype"] == examtype)
             ]
             current_ratio = self.ratio[
                 (self.ratio["Croho groepeernaam"] == programme)
                 & (self.ratio["Herkomst"] == origin)
+                & (self.ratio["Examentype"] == examtype)
             ]
 
             final_prediction = predictie[i]
@@ -269,7 +297,8 @@ class HigherYears:
                 (all_data["Collegejaar"] == self.predict_year)
                 & (all_data["Weeknummer"] == self.predict_week)
                 & (all_data["Croho groepeernaam"] == programme)
-                & (all_data["Herkomst"] == origin),
+                & (all_data["Herkomst"] == origin)
+                & (all_data["Examentype"] == examtype),
                 "Higher_years_prediction_XGBoost",
             ] = final_prediction
 
@@ -282,7 +311,8 @@ class HigherYears:
                     (all_data["Collegejaar"] == self.predict_year)
                     & (all_data["Weeknummer"] == self.predict_week)
                     & (all_data["Croho groepeernaam"] == programme)
-                    & (all_data["Herkomst"] == origin),
+                    & (all_data["Herkomst"] == origin)
+                    & (all_data["Examentype"] == examtype),
                     "Higher_years_prediction_Ratio",
                 ] = ratio_prediction
 
@@ -293,7 +323,8 @@ class HigherYears:
                 (all_data["Collegejaar"] == self.predict_year)
                 & (all_data["Weeknummer"] == self.predict_week)
                 & (all_data["Croho groepeernaam"] == programme)
-                & (all_data["Herkomst"] == origin),
+                & (all_data["Herkomst"] == origin)
+                & (all_data["Examentype"] == examtype),
                 "Higher_years_prediction",
             ] = final_prediction
 
@@ -309,6 +340,7 @@ class HigherYears:
                     & (all_data["Weeknummer"] == self.predict_week)
                     & (all_data["Croho groepeernaam"] == programme)
                     & (all_data["Herkomst"] == origin)
+                    & (all_data["Examentype"] == examtype)
                 ][prediction_label]
             )
 
@@ -316,14 +348,14 @@ class HigherYears:
                 (all_data["Collegejaar"] == self.predict_year)
                 & (all_data["Weeknummer"] == self.predict_week)
                 & (all_data["Croho groepeernaam"] == programme)
-                & (all_data["Herkomst"] == origin),
+                & (all_data["Herkomst"] == origin)
+                & (all_data["Examentype"] == examtype),
                 "Volume_prediction",
             ] = volume_prediction
 
         return all_data
 
     def fill_in_final_dataframe(self, all_data):
-
         if "Aantal_studenten_higher_years" in all_data.columns:
             all_data = all_data.drop(["Aantal_studenten_higher_years"], axis=1)
         if "Aantal_studenten_volume" in all_data.columns:
@@ -333,25 +365,32 @@ class HigherYears:
             self.data_student_numbers_higher_years.rename(
                 columns={"Aantal_studenten": "Aantal_studenten_higher_years"}
             ),
-            on=["Croho groepeernaam", "Herkomst", "Collegejaar"],
+            on=["Croho groepeernaam", "Herkomst", "Collegejaar", "Examentype"],
             how="left",
         )
+
         all_data = all_data.merge(
             self.data_student_numbers_volume.rename(
                 columns={"Aantal_studenten": "Aantal_studenten_volume"}
             ),
-            on=["Croho groepeernaam", "Herkomst", "Collegejaar"],
+            on=["Croho groepeernaam", "Herkomst", "Collegejaar", "Examentype"],
             how="left",
         )
 
         all_data["MAE_higher_years_XGBoost"] = abs(
             all_data["Higher_years_prediction_XGBoost"] - all_data["Aantal_studenten_higher_years"]
         )
+
         if "Higher_years_prediction_Ratio" in all_data.columns:
             all_data["MAE_higher_years_Ratio"] = abs(
                 all_data["Higher_years_prediction_Ratio"]
                 - all_data["Aantal_studenten_higher_years"]
             )
+
+        # all_data["MAE_higher_years_CurrentYear"] = abs(
+        #    all_data["Higher_years_prediction_CurrentYear"] - all_data["Aantal_studenten_higher_years"]
+        # )
+
         all_data["MAE_higher_years"] = abs(
             all_data["Higher_years_prediction"] - all_data["Aantal_studenten_higher_years"]
         )
@@ -366,6 +405,7 @@ class HigherYears:
             )
             / all_data["Aantal_studenten_higher_years"]
         )
+
         if "Higher_years_prediction_Ratio" in all_data.columns:
             all_data["MAPE_higher_years_Ratio"] = abs(
                 (
@@ -374,10 +414,20 @@ class HigherYears:
                 )
                 / all_data["Aantal_studenten_higher_years"]
             )
+
+        # all_data["MAPE_higher_years_CurrentYear"] = abs(
+        #    (
+        #        all_data["Higher_years_prediction_CurrentYear"]
+        #        - all_data["Aantal_studenten_higher_years"]
+        #    )
+        #    / all_data["Aantal_studenten_higher_years"]
+        # )
+
         all_data["MAPE_higher_years"] = abs(
             (all_data["Higher_years_prediction"] - all_data["Aantal_studenten_higher_years"])
             / all_data["Aantal_studenten_higher_years"]
         )
+
         all_data["MAPE_volume"] = abs(
             (all_data["Volume_prediction"] - all_data["Aantal_studenten_volume"])
             / all_data["Aantal_studenten_volume"]
@@ -385,7 +435,12 @@ class HigherYears:
 
         columns_to_consider = list(all_data.columns)
         for column in ["level_0", "index"]:
-            columns_to_consider.remove(column)
+            if column in columns_to_consider:
+                columns_to_consider.remove(column)
         all_data = all_data.drop_duplicates(subset=columns_to_consider)
+
+        # pd.set_option("display.max_columns", None)
+        # print(all_data[all_data["Collegejaar"] == 2023])
+        # pd.set_option("display.max_columns", 5)
 
         return all_data

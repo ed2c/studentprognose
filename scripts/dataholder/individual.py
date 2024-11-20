@@ -207,6 +207,9 @@ class Individual(Superclass):
             self.data_individual, self.programme_filtering, self.herkomst_filtering
         )
 
+        if len(data_to_predict) == 0:
+            return None
+
         # Split the DataFrame into smaller chunks for parallel processing
         nr_CPU_cores = os.cpu_count()
         chunk_size = math.ceil(
@@ -511,7 +514,10 @@ class Individual(Superclass):
 
             if target_col == "Inschrijvingen_predictie":
                 for week in missing_weeks:
-                    input_data[week] = input_data[str(decrement_week(int(week)))]
+                    if week == "39":
+                        input_data[week] = 0
+                    else:
+                        input_data[week] = input_data[str(decrement_week(int(week)))]
 
             input_data = input_data.fillna(0)
             input_data = input_data.melt(

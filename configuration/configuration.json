@@ -1,17 +1,23 @@
 {
     "paths": {
-        "path_cumulative": "",
-        "path_individual": "",
-        "path_latest": "",
-        "path_distances": "",
-        "path_weighted_ensemble": "",
-        "path_october": "",
-        "path_student_count_first-years": "",
-        "path_student_count_higher-years": "",
-        "path_student_volume": ""
+        "path_cumulative": "\\\\ru.nl\\wrkgrp\\TeamIR\\Man_info\\Student Analytics\\Prognosemodel RU\\Syntax\\Python\\studentprognose\\data\\input\\example_rowbinded.csv",
+        "path_individual": "\\\\ru.nl\\wrkgrp\\TeamIR\\Man_info\\Student Analytics\\Prognosemodel RU\\Syntax\\Python\\studentprognose\\data\\input\\vooraanmeldingen_individueel.csv",
+        "path_latest": "\\\\ru.nl\\wrkgrp\\TeamIR\\Man_info\\Student Analytics\\Prognosemodel RU\\Syntax\\Python\\studentprognose\\data\\input\\totaal.xlsx",
+        "path_distances": "\\\\ru.nl\\wrkgrp\\TeamIR\\Man_info\\Student Analytics\\Prognosemodel RU\\Syntax\\Python\\studentprognose\\data\\input\\afstanden.xlsx",
+        "path_weighted_ensemble": "\\\\ru.nl\\wrkgrp\\TeamIR\\Man_info\\Student Analytics\\Prognosemodel RU\\Syntax\\Python\\studentprognose\\configuration\\ensemble_weights.xlsx",
+        "path_october": "\\\\ru.nl\\wrkgrp\\Centraal-bestanden-delen\\1-oktobercijfers\\Feiten en Cijfers Studentenaantallen 2024.xlsx",
+        "path_student_count_first-years": "\\\\ru.nl\\wrkgrp\\TeamIR\\Man_info\\Student Analytics\\Prognosemodel RU\\Syntax\\Python\\studentprognose\\data\\input\\example_studentcount_rowbinded.xlsx",
+        "path_student_count_higher-years": "\\\\ru.nl\\wrkgrp\\TeamIR\\Man_info\\Student Analytics\\Prognosemodel RU\\Syntax\\Python\\studentprognose\\data\\input\\student_count_higher-years.xlsx",
+        "path_student_volume": "\\\\ru.nl\\wrkgrp\\TeamIR\\Man_info\\Student Analytics\\Prognosemodel RU\\Syntax\\Python\\studentprognose\\data\\input\\student_volume.xlsx",
+        "path_ratios": "\\\\ru.nl\\wrkgrp\\TeamIR\\Man_info\\Student Analytics\\Prognosemodel RU\\Syntax\\Python\\studentprognose\\data\\input\\ratiobestand.xlsx"
     },
     "numerus_fixus": {
-        ""
+        "B Artificial Intelligence": 200,
+        "B Biology": 220,
+        "B Biomedische Wetenschappen": 100,
+        "B Geneeskunde": 330,
+        "B Psychologie": 600,
+        "B Tandheelkunde": 67
     },
     "columns": {
         "individual": {

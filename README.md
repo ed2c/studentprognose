@@ -7,7 +7,6 @@ Hoewel, spannend.. we kunnen dit ook voorspellen! Het doel van de instroomprogno
 Wil je meedenken? Meld je vooral aan voor de [werkgroep](https://edu.nl/6d69d).
 
 Dankzij jullie eerdere feedback hebben we de code verbeterd en aangevuld met documentatie. En we hebben een testbestand met gepseudonimiseerde data toegevoegd zodat daarmee getest kan worden. Let wel: Dit is alleen voor het cumulatieve model (zie onder). De volgende stap is script te maken dat ruwe Studielink telbestanden transformeert naar de cumulatieve data zoals die nu in het model gaat. Ook komen we met een betere omschrijving van het 'individuele' bestand. 
-
 Wordt vervolgd! 
 
 # Student forecasting model

@@ -49,6 +49,10 @@ def load_data(configuration):
         pd.read_excel(paths["path_student_volume"]) if paths["path_student_volume"] != "" else None
     )
 
+    data_october = pd.read_excel(paths["path_october"]) if paths["path_october"] != "" else None
+
+    data_ratios = pd.read_excel(paths["path_ratios"]) if paths["path_ratios"] != "" else None
+
     if data_individual is not None:
         columns_i = configuration["columns"]["individual"]
         data_individual = data_individual.rename(
@@ -120,6 +124,8 @@ def load_data(configuration):
         data_latest,
         data_distances,
         data_weighted_ensemble,
+        data_october,
+        data_ratios,
     )
 
 

@@ -272,7 +272,8 @@ def replace_latest_data(data_latest: pd.DataFrame, data: pd.DataFrame, predict_y
     data_latest = data_latest.reset_index(drop=True)
 
     weeks_used = np.delete(weeks_used, 0)
-    data_latest = data_latest.merge(
+
+    merged_data_latest = data_latest.merge(
         data[data["Collegejaar"].isin(years_used) & data["Weeknummer"].isin(weeks_used)][
             [
                 "Croho groepeernaam",
@@ -284,10 +285,24 @@ def replace_latest_data(data_latest: pd.DataFrame, data: pd.DataFrame, predict_y
         ],
         on=["Croho groepeernaam", "Collegejaar", "Herkomst", "Weeknummer"],
         how="left",
+        suffixes=("", "_new"),
     )
-    data_latest = data_latest.drop(["Voorspelde vooraanmelders_x"], axis=1).rename(
-        columns={"Voorspelde vooraanmelders_y": "Voorspelde vooraanmelders"}
-    )
+    data_latest["Voorspelde vooraanmelders"] = merged_data_latest[
+        "Voorspelde vooraanmelders_new"
+    ].combine_first(data_latest["Voorspelde vooraanmelders"])
+
+    # print(data_latest[(data_latest["Croho groepeernaam"] == "B Bedrijfskunde") &
+    #                (data_latest["Herkomst"] == "NL") &
+    #                (data_latest["Collegejaar"] == 2024) &
+    #                (data_latest["Weeknummer"] == 13)]
+    #    [["Voorspelde vooraanmelders_x", "Voorspelde vooraanmelders_y"]])
+    # pd.set_option("display.max_columns", None)
+    # print(data_latest)
+    # data_latest = data_latest.drop(["Voorspelde vooraanmelders_x"], axis=1).rename(
+    #    columns={"Voorspelde vooraanmelders_y": "Voorspelde vooraanmelders"}
+    # )
+    # print("/////////////////////////////////////////////////////////////////////////////////////")
+    # print(data_latest)
 
     data_latest = data_latest.reset_index(drop=True)
 

@@ -173,6 +173,8 @@ class Main:
             self.data_latest,
             self.data_distances,
             self.ensemble_weights,
+            self.data_october,
+            self.data_ratios,
         ) = load_data(self.configuration)
 
         CWD = os.path.dirname(os.path.abspath(__file__))
@@ -200,14 +202,25 @@ class Main:
                 raise Exception("Individual dataset not found")
             if self.data_cumulative is None:
                 raise Exception("Cumulative dataset not found")
-            self.dataholder = BothDatasets(
-                self.data_individual,
-                self.data_cumulative,
-                self.data_distances,
-                self.data_student_numbers_first_years,
-                self.configuration,
-                helpermethods_initialise_material,
-            )
+            try:
+                self.dataholder = BothDatasets(
+                    self.data_individual,
+                    self.data_cumulative,
+                    self.data_distances,
+                    self.data_student_numbers_first_years,
+                    self.configuration,
+                    helpermethods_initialise_material,
+                    self.years,
+                )
+            except ValueError as e:
+                print(e)  # Log the error message
+                # Initialize only the cumulative dataset:
+                self.dataholder = Cumulative(
+                    self.data_cumulative,
+                    self.data_student_numbers_first_years,
+                    self.configuration,
+                    helpermethods_initialise_material,
+                )
         elif self.data_option == DataOption.INDIVIDUAL:
             if self.data_individual is None:
                 raise Exception("Individual dataset not found")
@@ -216,13 +229,18 @@ class Main:
                 self.data_distances,
                 self.configuration,
                 helpermethods_initialise_material,
+                self.years,
             )
 
         self.higher_years_dataholder = HigherYears(
             self.data_student_numbers_first_years,
             self.data_student_numbers_higher_years,
             self.data_student_numbers_volume,
+            self.data_individual,
             self.configuration,
+            self.data_october,
+            self.data_ratios,
+            CWD,
         )
 
         if (
@@ -312,8 +330,11 @@ class Main:
         if (
             "test" not in self.filtering_path
         ):  # We do this to ensure faster testing times for fast setups
-            print("Saving output...")
-            self.dataholder.helpermethods.save_output(self.student_year_prediction)
+            if self.dataholder.helpermethods.data is not None:
+                print("Saving output...")
+                self.dataholder.helpermethods.save_output(self.student_year_prediction)
+            else:
+                print("No data to save. Saving output skipped.")
 
 
 if __name__ == "__main__":

@@ -4,7 +4,7 @@ import subprocess
 script_path = "hooks/install_pre-push.sh"
 
 # Run the script using subprocess.run()
-result = subprocess.run(["bash", script_path], capture_output=True, text=True)
+result = subprocess.run(["bash", script_path], capture_output=True, text=True, shell=True)
 
 # Check if the script ran successfully
 if result.returncode == 0:
