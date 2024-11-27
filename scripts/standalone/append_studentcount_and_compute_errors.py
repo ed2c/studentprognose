@@ -1,7 +1,10 @@
 import os as os
 import pandas as pd
 import numpy as np
-from load_data import load_configuration
+import sys
+
+sys.path.insert(0, os.path.abspath(os.path.join(os.path.dirname(__file__), "..", "..")))
+from scripts.load_data import load_configuration
 
 
 def recent_year_count(data, student_count_first_years, student_count_higher_years):
@@ -130,6 +133,6 @@ if __name__ == "__main__":
 
     result = recent_year_count(output, student_count_first_years, student_count_higher_years)
 
-    CWD = os.path.dirname(os.path.dirname(os.path.abspath(__file__)))
+    CWD = os.path.dirname(os.path.dirname(os.path.dirname(os.path.abspath(__file__))))
     outfile = os.path.join(CWD, "data/output/totaal.xlsx")
     result.to_excel(outfile)

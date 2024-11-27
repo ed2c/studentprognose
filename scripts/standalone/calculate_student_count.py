@@ -1,7 +1,10 @@
 import numpy as np
 import pandas as pd
-from load_data import load_configuration
 import os
+import sys
+
+sys.path.insert(0, os.path.abspath(os.path.join(os.path.dirname(__file__), "..", "..")))
+from scripts.load_data import load_configuration
 
 
 def map_examtype(exam_code):
@@ -40,7 +43,10 @@ def calculate_student_count(data, volume):
                 ]
 
                 if not volume:
-                    filtered_data = filtered_data[filtered_data["Aantal eerstejaars croho"] == 1]
+                    filtered_data = filtered_data[
+                        (filtered_data[examtype_key] == "Pre-master")
+                        | (filtered_data["Aantal eerstejaars croho"] == 1)
+                    ]
                     filtered_data = filtered_data[
                         (filtered_data[examtype_key] == "Bachelor eerstejaars")
                         | (filtered_data[examtype_key] == "Master")
@@ -80,10 +86,10 @@ def calculate_student_count(data, volume):
 
 
 if __name__ == "__main__":
+    CWD = os.path.dirname(os.path.dirname(os.path.dirname(os.path.abspath(__file__))))
+
     configuration = load_configuration("configuration/configuration.json")
     data = pd.read_excel(configuration["paths"]["path_october"])
-
-    CWD = os.path.dirname(os.path.dirname(os.path.abspath(__file__)))
 
     # First-years student count including Pre-master
     output_path = os.path.join(CWD, "data", "input", "student_count_first-years.xlsx")

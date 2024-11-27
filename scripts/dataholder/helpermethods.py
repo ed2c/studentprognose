@@ -3,6 +3,7 @@ from scripts.helper import *
 import numpy as np
 import pandas as pd
 import os
+from statistics import mean
 
 
 class HelperMethods:
@@ -95,27 +96,45 @@ class HelperMethods:
                         & (data["Croho groepeernaam"] == nf)
                     ]
                     if np.sum(nf_data["SARIMA_individual"]) > self.numerus_fixus_list[nf]:
-                        data.loc[
-                            (data["Collegejaar"] == year)
-                            & (data["Weeknummer"] == week)
-                            & (data["Croho groepeernaam"] == nf)
-                            & (data["Herkomst"] == "NL"),
-                            "SARIMA_individual",
-                        ] = nf_data[nf_data["Herkomst"] == "NL"]["SARIMA_individual"] - (
-                            np.sum(nf_data["SARIMA_individual"]) - self.numerus_fixus_list[nf]
+                        data = self._nf_students_based_on_distribution_of_last_years(
+                            self.data_latest, nf, year, week, "SARIMA_individual"
                         )
 
                     if np.sum(nf_data["SARIMA_cumulative"]) > self.numerus_fixus_list[nf]:
-                        data.loc[
-                            (data["Collegejaar"] == year)
-                            & (data["Weeknummer"] == week)
-                            & (data["Croho groepeernaam"] == nf)
-                            & (data["Herkomst"] == "NL"),
-                            "SARIMA_cumulative",
-                        ] = nf_data[nf_data["Herkomst"] == "NL"]["SARIMA_cumulative"] - (
-                            np.sum(nf_data["SARIMA_cumulative"]) - self.numerus_fixus_list[nf]
+                        data = self._nf_students_based_on_distribution_of_last_years(
+                            self.data_latest, nf, year, week, "SARIMA_cumulative"
                         )
 
+        return data
+
+    def _nf_students_based_on_distribution_of_last_years(self, data, nf, year, week, method):
+        last_years_data = data[
+            (data["Collegejaar"] < year)
+            & (data["Collegejaar"] >= year - 3)
+            & (data["Weeknummer"] == week)
+            & (data["Croho groepeernaam"] == nf)
+        ].fillna(0)
+        distribution_per_herkomst = {"EER": [], "NL": [], "Niet-EER": []}
+        for last_year in range(year - 3, year):
+            total_students = last_years_data[last_years_data["Collegejaar"] == last_year][
+                "Aantal_studenten"
+            ].sum()
+            for herkomst in distribution_per_herkomst:
+                distribution_per_herkomst[herkomst].append(
+                    last_years_data[
+                        (last_years_data["Collegejaar"] == last_year)
+                        & (last_years_data["Herkomst"] == herkomst)
+                    ]["Aantal_studenten"].values[0]
+                    / total_students
+                )
+        for herkomst in distribution_per_herkomst:
+            data.loc[
+                (data["Collegejaar"] == year)
+                & (data["Weeknummer"] == week)
+                & (data["Croho groepeernaam"] == nf)
+                & (data["Herkomst"] == herkomst),
+                method,
+            ] = self.numerus_fixus_list[nf] * mean(distribution_per_herkomst[herkomst])
         return data
 
     # This method is used in the main class after predicting the number of students and processes
@@ -301,7 +320,7 @@ class HelperMethods:
         # Only do this when predicting both datasets because the ensemble values won't be valid
         # otherwise.
         if self.data_option == DataOption.BOTH_DATASETS:
-            self._create_ensemble_columns()
+            self._create_ensemble_columns(predict_year, predict_week)
 
         # Calculate and add error values ('MAE_...' and 'MAPE_...')
         self._create_error_columns()
@@ -310,18 +329,32 @@ class HelperMethods:
 
         self.data_latest = self.data
 
-    def _create_ensemble_columns(self):
+    def _create_ensemble_columns(self, predict_year, predict_week):
         self.data = self.data.sort_values(
             by=["Croho groepeernaam", "Herkomst", "Collegejaar", "Weeknummer"]
         )
         self.data = self.data.reset_index(drop=True)
 
         # Initialize columns
-        self.data["Ensemble_prediction"] = np.nan
-        self.data["Weighted_ensemble_prediction"] = -1.0
+        self.data.loc[
+            (self.data["Collegejaar"] == predict_year) & (self.data["Weeknummer"] == predict_week),
+            "Ensemble_prediction",
+        ] = np.nan
+        self.data.loc[
+            (self.data["Collegejaar"] == predict_year) & (self.data["Weeknummer"] == predict_week),
+            "Weighted_ensemble_prediction",
+        ] = -1.0
 
         # Compute ensemble predictions using vectorized operations
-        self.data["Ensemble_prediction"] = self.data.apply(self._get_normal_ensemble, axis=1)
+
+        self.data.loc[
+            (self.data["Collegejaar"] == predict_year) & (self.data["Weeknummer"] == predict_week),
+            "Ensemble_prediction",
+        ] = self.data[
+            (self.data["Collegejaar"] == predict_year) & (self.data["Weeknummer"] == predict_week)
+        ].apply(
+            self._get_normal_ensemble, axis=1
+        )
 
         if self.ensemble_weights is not None:
             # Merge weights into data for vectorized calculations
@@ -332,24 +365,53 @@ class HelperMethods:
                 )
             self.data = self.data.merge(
                 weights,
-                on=["Croho groepeernaam", "Herkomst"],
+                on=["Collegejaar", "Croho groepeernaam", "Herkomst"],
                 how="left",
                 suffixes=("", "_weight"),
             )
 
             weighted_ensemble = (
-                self.data["SARIMA_cumulative"].fillna(0)
-                * self.data["SARIMA_cumulative_weight"].fillna(0)
-                + self.data["SARIMA_individual"].fillna(0)
-                * self.data["SARIMA_individual_weight"].fillna(0)
-                + self.data["Prognose_ratio"].fillna(0)
-                * self.data["Prognose_ratio_weight"].fillna(0)
+                self.data[
+                    (self.data["Collegejaar"] == predict_year)
+                    & (self.data["Weeknummer"] == predict_week)
+                ]["SARIMA_cumulative"].fillna(0)
+                * self.data[
+                    (self.data["Collegejaar"] == predict_year)
+                    & (self.data["Weeknummer"] == predict_week)
+                ]["SARIMA_cumulative_weight"].fillna(0)
+                + self.data[
+                    (self.data["Collegejaar"] == predict_year)
+                    & (self.data["Weeknummer"] == predict_week)
+                ]["SARIMA_individual"].fillna(0)
+                * self.data[
+                    (self.data["Collegejaar"] == predict_year)
+                    & (self.data["Weeknummer"] == predict_week)
+                ]["SARIMA_individual_weight"].fillna(0)
+                + self.data[
+                    (self.data["Collegejaar"] == predict_year)
+                    & (self.data["Weeknummer"] == predict_week)
+                ]["Prognose_ratio"].fillna(0)
+                * self.data[
+                    (self.data["Collegejaar"] == predict_year)
+                    & (self.data["Weeknummer"] == predict_week)
+                ]["Prognose_ratio_weight"].fillna(0)
             )
 
-            self.data["Weighted_ensemble_prediction"] = np.where(
-                self.data["Average_ensemble_prediction_weight"] != 1,
+            self.data.loc[
+                (self.data["Collegejaar"] == predict_year)
+                & (self.data["Weeknummer"] == predict_week),
+                "Weighted_ensemble_prediction",
+            ] = np.where(
+                self.data[
+                    (self.data["Collegejaar"] == predict_year)
+                    & (self.data["Weeknummer"] == predict_week)
+                ]["Average_ensemble_prediction_weight"]
+                != 1,
                 weighted_ensemble,
-                self.data["Weighted_ensemble_prediction"],
+                self.data[
+                    (self.data["Collegejaar"] == predict_year)
+                    & (self.data["Weeknummer"] == predict_week)
+                ]["Weighted_ensemble_prediction"],
             )
 
             self.data = self.data.drop(

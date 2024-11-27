@@ -164,6 +164,11 @@ class Individual(Superclass):
 
         data = data.drop(["Sleutel"], axis=1)
 
+        data.loc[
+            data["Examentype"] == "Pre-master",
+            ["Is eerstejaars croho opleiding", "Is hogerejaars", "BBC ontvangen"],
+        ] = [1, 0, 0]
+
         data = data[
             (data["Is eerstejaars croho opleiding"] == 1)
             & (data["Is hogerejaars"] == 0)

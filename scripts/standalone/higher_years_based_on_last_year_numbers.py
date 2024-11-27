@@ -1,7 +1,10 @@
-from load_data import load_configuration
 import os
 import pandas as pd
 import numpy as np
+import sys
+
+sys.path.insert(0, os.path.abspath(os.path.join(os.path.dirname(__file__), "..", "..")))
+from scripts.load_data import load_configuration
 
 
 class PredictHigherYearsBasedOnLastYearNumbers:
@@ -30,6 +33,32 @@ class PredictHigherYearsBasedOnLastYearNumbers:
                 ]["EER-NL-nietEER"].unique():
                     if examtype in ["Bachelor eerstejaars", "Bachelor hogerejaars"]:
                         examtype = "Bachelor"
+
+                    data_filtered = self.data_latest[
+                        (self.data_latest["Croho groepeernaam"] == programme)
+                        & (self.data_latest["Examentype"] == examtype)
+                        & (self.data_latest["Herkomst"] == herkomst)
+                        & (self.data_latest["Collegejaar"] == predict_year - 1)
+                    ]
+                    try:
+                        faculteit = self.data_latest[
+                            self.data_latest["Croho groepeernaam"] == programme
+                        ]["Faculteit"].values[0]
+                    except:
+                        faculteit = None  # Van toepassing bij nieuwe opleidingen waarvan faculteit niet bekend is in totaalbestand.
+                    for week in range(1, 53):
+                        if data_filtered[data_filtered["Weeknummer"] == week].empty:
+                            all_data = all_data._append(
+                                {
+                                    "Examentype": examtype,
+                                    "Croho groepeernaam": programme,
+                                    "Herkomst": herkomst,
+                                    "Faculteit": faculteit,
+                                    "Collegejaar": predict_year,
+                                    "Weeknummer": week,
+                                },
+                                ignore_index=True,
+                            )
 
                     nextyear_higher_years = self.predict_with_last_year_numbers(
                         predict_year, programme, examtype, herkomst, skip_years, week
@@ -74,7 +103,7 @@ class PredictHigherYearsBasedOnLastYearNumbers:
 
         if not skip_years:
             currentyear_higher_years = self.data_student_numbers_higher_years[
-                (self.data_student_numbers_higher_years["Collegejaar"] == predict_year)
+                (self.data_student_numbers_higher_years["Collegejaar"] == predict_year - 1)
                 & (self.data_student_numbers_higher_years["Croho groepeernaam"] == programme)
                 & (self.data_student_numbers_higher_years["Examentype"] == examtype)
                 & (self.data_student_numbers_higher_years["Herkomst"] == herkomst)
@@ -85,7 +114,7 @@ class PredictHigherYearsBasedOnLastYearNumbers:
                 currentyear_higher_years = 0
 
             currentyear_first_years = self.data_student_numbers_first_years[
-                (self.data_student_numbers_first_years["Collegejaar"] == predict_year)
+                (self.data_student_numbers_first_years["Collegejaar"] == predict_year - 1)
                 & (self.data_student_numbers_first_years["Croho groepeernaam"] == programme)
                 & (self.data_student_numbers_first_years["Examentype"] == examtype)
                 & (self.data_student_numbers_first_years["Herkomst"] == herkomst)
@@ -97,7 +126,7 @@ class PredictHigherYearsBasedOnLastYearNumbers:
 
         if skip_years:
             predicted_row = self.data_latest[
-                (self.data_latest["Collegejaar"] == predict_year - skip_years)
+                (self.data_latest["Collegejaar"] == predict_year - skip_years - 1)
                 & (self.data_latest["Croho groepeernaam"] == programme)
                 & (self.data_latest["Examentype"] == examtype)
                 & (self.data_latest["Herkomst"] == herkomst)
@@ -138,6 +167,11 @@ if __name__ == "__main__":
     data_ratios = pd.read_excel(configuration["paths"]["path_ratios"])
     data_latest = pd.read_excel(configuration["paths"]["path_latest"])
 
+    data_october = data_october[data_october["Examentype code"] != "Master post-initieel"]
+    data_october[
+        data_october["Groepeernaam Croho"] == "M LVHO in de Taal- en Cultuurwetenschappen"
+    ]["Groepeernaam Croho"] = "M LVHO in de Taal en Cultuurwetenschappen"
+
     predict_higher_years_based_on_last_year_numbers = PredictHigherYearsBasedOnLastYearNumbers(
         data_student_numbers_first_years,
         data_student_numbers_higher_years,
@@ -146,7 +180,7 @@ if __name__ == "__main__":
         data_latest,
     )
 
-    predict_years = [2024, 2025]
+    predict_years = [2025]
     skip_years = 0
     week = 0
 
@@ -189,7 +223,7 @@ if __name__ == "__main__":
     )
 
     print("Saving output...")
-    CWD = os.path.dirname(os.path.dirname(os.path.abspath(__file__)))
+    CWD = os.path.dirname(os.path.dirname(os.path.dirname(os.path.abspath(__file__))))
     outfile = os.path.join(CWD, "data/output/output_higher-years.xlsx")
 
     data_latest.to_excel(outfile)

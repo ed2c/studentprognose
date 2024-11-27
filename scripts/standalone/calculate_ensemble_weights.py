@@ -1,9 +1,14 @@
 import pandas as pd
 import numpy as np
+import os
+
+years = [2022, 2023, 2024, 2025]
 
 data = pd.read_excel(
-    "//ru.nl/wrkgrp/TeamIR/Man_info/Student Analytics/Prognosemodel RU/Syntax/Python/studentprognose/data/output/output.xlsx"
+    "//ru.nl/wrkgrp/TeamIR/Man_info/Student Analytics/Prognosemodel RU/Syntax/Python/studentprognose/data/input/totaal.xlsx"
 )
+
+data = data.replace(np.inf, np.nan)
 
 data = data.rename(
     columns={
@@ -23,6 +28,8 @@ data = data.rename(
 )
 
 percentage_range = range(10, 150, 10)
+
+methods = ["SARIMA_cumulative", "SARIMA_individual", "Prognose_ratio"]
 
 
 def calculate_weight_distribution(metrics, percentage, second_percentage):
@@ -59,7 +66,7 @@ def calculate_weight_distribution(metrics, percentage, second_percentage):
 
 
 def get_metric_weight_distribution(
-    data, programme, herkomst, percentage, second_percentage, methods
+    data, programme, herkomst, percentage, second_percentage, methods, year
 ):
     # print(programme, herkomst)
     data = data[data["Croho groepeernaam"] == programme]
@@ -77,39 +84,58 @@ def get_metric_weight_distribution(
 
 
 weight_distribution = {
+    "Collegejaar": [],
     "Programme": [],
     "Herkomst": [],
     "Percentage": [],
     "Second percentage": [],
 }
 
-methods = ["SARIMA_cumulative", "SARIMA_individual", "Prognose_ratio"]
-
 MAEs = []
 MAPEs = []
 
 print("Calculating weight distribution...")
-for percentage in percentage_range:
-    for second_percentage in percentage_range:
-        for programme in data["Croho groepeernaam"].unique():
-            for herkomst in data["Herkomst"].unique():
-                weight_distribution["Programme"].append(programme)
-                weight_distribution["Herkomst"].append(herkomst)
-                weight_distribution["Percentage"].append(percentage)
-                weight_distribution["Second percentage"].append(second_percentage)
+for year in years:
+    print(f"Year: {year}")
+    data_temp = data[data["Collegejaar"] < year]
+    for percentage in percentage_range:
+        print(f"Percentage: {percentage}")
+        for second_percentage in percentage_range:
+            for programme in data_temp["Croho groepeernaam"].unique():
+                for herkomst in data_temp["Herkomst"].unique():
+                    weight_distribution["Collegejaar"].append(year)
+                    weight_distribution["Programme"].append(programme)
+                    weight_distribution["Herkomst"].append(herkomst)
+                    weight_distribution["Percentage"].append(percentage)
+                    weight_distribution["Second percentage"].append(second_percentage)
 
-                MAE, MAPE = get_metric_weight_distribution(
-                    data, programme, herkomst, percentage, second_percentage, methods
-                )
+                    MAE, MAPE = get_metric_weight_distribution(
+                        data_temp,
+                        programme,
+                        herkomst,
+                        percentage,
+                        second_percentage,
+                        methods,
+                        year,
+                    )
 
-                MAEs.append(MAE)
-                MAPEs.append(MAPE)
+                    MAEs.append(MAE)
+                    MAPEs.append(MAPE)
 
 for m in methods:
     weight_distribution[f"MAE_{m}"] = [dict(MAE)[m] for MAE in MAEs]
     weight_distribution[f"MAPE_{m}"] = [dict(MAPE)[m] for MAPE in MAPEs]
 
 weight_data = pd.DataFrame(weight_distribution)
+
+if os.path.isfile("configuration/weight_distribution.xlsx"):
+    existing_weight_data = pd.read_excel("configuration/weight_distribution.xlsx")
+    existing_weight_data = existing_weight_data[~existing_weight_data["Collegejaar"].isin(years)]
+    weight_data = pd.concat([existing_weight_data, weight_data])
+    weight_data = weight_data.sort_values(
+        by=["Collegejaar", "Programme", "Herkomst", "Percentage", "Second percentage"]
+    )
+
 weight_data.to_excel("configuration/weight_distribution.xlsx", index=False)
 
 
@@ -123,6 +149,7 @@ def mean_absolute_percentage_error(true, prediction):
 
 print("Calculating error rates...")
 error_rates = {
+    "Collegejaar": [],
     "Percentage": [],
     "Second percentage": [],
     "MAE": [],
@@ -131,94 +158,115 @@ error_rates = {
     "MAE of AE": [],
     "MAPE of AE": [],
 }
-for herkomst in ["EER", "NL", "Niet-EER"]:
-    for percentage in percentage_range:
-        for second_percentage in percentage_range:
-            error_rates["Percentage"].append(percentage)
-            error_rates["Second percentage"].append(second_percentage)
-
-            MAE_total = 0.0
-            MAPE_total = 0.0
-
-            MAE_total_AE = 0.0
-            MAPE_total_AE = 0.0
-
-            filtered_weight_data = weight_data[weight_data["Percentage"] == percentage]
-            filtered_weight_data = filtered_weight_data[
-                filtered_weight_data["Second percentage"] == second_percentage
+for year in years:
+    print(f"Year: {year}")
+    temp_filtered_weight_data_year = weight_data[weight_data["Collegejaar"] == year]
+    for herkomst in ["EER", "NL", "Niet-EER"]:
+        temp_filtered_weight_data_herkomst = temp_filtered_weight_data_year[
+            temp_filtered_weight_data_year["Herkomst"] == herkomst
+        ]
+        print(f"Herkomst: {herkomst}")
+        for percentage in percentage_range:
+            temp_filtered_weight_data_percentage = temp_filtered_weight_data_herkomst[
+                temp_filtered_weight_data_herkomst["Percentage"] == percentage
             ]
-            filtered_weight_data = filtered_weight_data[
-                filtered_weight_data["Herkomst"] == herkomst
-            ]
-            for i, row_weight in filtered_weight_data.iterrows():
-                filtered_data = data[data["Croho groepeernaam"] == row_weight["Programme"]]
-                filtered_data = filtered_data[filtered_data["Herkomst"] == row_weight["Herkomst"]]
-                filtered_data = filtered_data[filtered_data["Collegejaar"] >= 2021]
+            for second_percentage in percentage_range:
+                filtered_weight_data = temp_filtered_weight_data_percentage[
+                    temp_filtered_weight_data_percentage["Second percentage"] == second_percentage
+                ]
 
-                use_average_ensemble = False
-                if sum([row_weight[f"MAE_{method}"] for method in methods]) != 1:
-                    use_average_ensemble = True
+                error_rates["Collegejaar"].append(year)
+                error_rates["Percentage"].append(percentage)
+                error_rates["Second percentage"].append(second_percentage)
 
-                MAE_subtotal = 0.0
-                MAPE_subtotal = 0.0
+                MAE_total = 0.0
+                MAPE_total = 0.0
 
-                MAE_subtotal_AE = 0.0
-                MAPE_subtotal_AE = 0.0
-                for j, row in filtered_data.iterrows():
-                    if use_average_ensemble:
+                MAE_total_AE = 0.0
+                MAPE_total_AE = 0.0
+
+                for i, row_weight in filtered_weight_data.iterrows():
+                    filtered_data = data[
+                        (data["Croho groepeernaam"] == row_weight["Programme"])
+                        & (data["Collegejaar"] < row_weight["Collegejaar"])
+                    ]
+                    filtered_data = filtered_data[
+                        filtered_data["Herkomst"] == row_weight["Herkomst"]
+                    ]
+                    filtered_data = filtered_data[filtered_data["Collegejaar"] >= 2021]
+                    # print(filtered_data)
+
+                    use_average_ensemble = False
+                    if sum([row_weight[f"MAE_{method}"] for method in methods]) != 1:
+                        use_average_ensemble = True
+
+                    MAE_subtotal = 0.0
+                    MAPE_subtotal = 0.0
+
+                    MAE_subtotal_AE = 0.0
+                    MAPE_subtotal_AE = 0.0
+                    for j, row in filtered_data.iterrows():
+                        if use_average_ensemble:
+                            if not np.isnan(row["MAE_Average_ensemble_prediction"]):
+                                MAE_subtotal += row["MAE_Average_ensemble_prediction"]
+                            if not np.isnan(row["MAPE_Average_ensemble_prediction"]):
+                                MAPE_total += row["MAPE_Average_ensemble_prediction"]
+                        else:
+                            if all(
+                                [(not np.isnan(row[method])) for method in methods]
+                            ) and not np.isnan(row["Aantal_studenten"]):
+                                new_ensemble_prediction = sum(
+                                    [
+                                        (row[method] * row_weight[f"MAE_{method}"])
+                                        for method in methods
+                                    ]
+                                )
+                                MAE_subtotal += mean_absolute_error(
+                                    row["Aantal_studenten"], new_ensemble_prediction
+                                )
+                                MAPE_subtotal += mean_absolute_percentage_error(
+                                    row["Aantal_studenten"], new_ensemble_prediction
+                                )
+
                         if not np.isnan(row["MAE_Average_ensemble_prediction"]):
-                            MAE_subtotal += row["MAE_Average_ensemble_prediction"]
+                            MAE_subtotal_AE += row["MAE_Average_ensemble_prediction"]
                         if not np.isnan(row["MAPE_Average_ensemble_prediction"]):
-                            MAPE_total += row["MAPE_Average_ensemble_prediction"]
-                    else:
-                        if all(
-                            [(not np.isnan(row[method])) for method in methods]
-                        ) and not np.isnan(row["Aantal_studenten"]):
-                            new_ensemble_prediction = sum(
-                                [(row[method] * row_weight[f"MAE_{method}"]) for method in methods]
-                            )
-                            MAE_subtotal += mean_absolute_error(
-                                row["Aantal_studenten"], new_ensemble_prediction
-                            )
-                            MAPE_subtotal += mean_absolute_percentage_error(
-                                row["Aantal_studenten"], new_ensemble_prediction
-                            )
+                            MAPE_subtotal_AE += row["MAPE_Average_ensemble_prediction"]
 
-                    if not np.isnan(row["MAE_Average_ensemble_prediction"]):
-                        MAE_subtotal_AE += row["MAE_Average_ensemble_prediction"]
-                    if not np.isnan(row["MAPE_Average_ensemble_prediction"]):
-                        MAPE_subtotal_AE += row["MAPE_Average_ensemble_prediction"]
+                    count = len(filtered_data)
+                    if count == 0:
+                        count = 1
 
-                count = len(filtered_data)
-                if count == 0:
-                    count = 1
+                    MAE_total += MAE_subtotal / count
+                    MAPE_total += MAPE_subtotal / count * 100
 
-                MAE_total += MAE_subtotal / count
-                MAPE_total += MAPE_subtotal / count * 100
+                    # print(MAE_total)
 
-                MAE_total_AE += MAE_subtotal_AE / count
-                MAPE_total_AE += MAPE_subtotal_AE / count * 100
+                    MAE_total_AE += MAE_subtotal_AE / count
+                    MAPE_total_AE += MAPE_subtotal_AE / count * 100
 
-            error_rates["MAE"].append(MAE_total / len(filtered_weight_data))
-            error_rates["MAPE"].append(MAPE_total / len(filtered_weight_data))
-            error_rates["Herkomst"].append(herkomst)
-            error_rates["MAE of AE"].append(MAE_total_AE / len(filtered_weight_data))
-            error_rates["MAPE of AE"].append(MAPE_total_AE / len(filtered_weight_data))
+                error_rates["MAE"].append(MAE_total / len(filtered_weight_data))
+                error_rates["MAPE"].append(MAPE_total / len(filtered_weight_data))
+                error_rates["Herkomst"].append(herkomst)
+                error_rates["MAE of AE"].append(MAE_total_AE / len(filtered_weight_data))
+                error_rates["MAPE of AE"].append(MAPE_total_AE / len(filtered_weight_data))
 
 error_rates = pd.DataFrame(error_rates)
+
+if os.path.isfile("configuration/error_rates.xlsx"):
+    existing_error_rates = pd.read_excel("configuration/error_rates.xlsx")
+    existing_error_rates = existing_error_rates[~existing_error_rates["Collegejaar"].isin(years)]
+    error_rates = pd.concat([existing_error_rates, error_rates])
+    error_rates = error_rates.sort_values(by=["Collegejaar", "Percentage", "Second percentage"])
+
 error_rates.to_excel("configuration/error_rates.xlsx", index=False)
 
-percentage_per_herkomst = {"EER": (), "NL": (), "Niet-EER": ()}
-for herkomst in percentage_per_herkomst.keys():
-    temp_data = error_rates[error_rates["Herkomst"] == herkomst]
-    temp_data = temp_data[temp_data["MAE"] == temp_data["MAE"].min()]
-    percentage_per_herkomst[herkomst] = (
-        float(temp_data["Percentage"].iloc[0]),
-        float(temp_data["Second percentage"].iloc[0]),
-    )
+error_rates = pd.read_excel("configuration/error_rates.xlsx")
+weight_data = pd.read_excel("configuration/weight_distribution.xlsx")
 
 print("Calculating ensemble weights...")
 ensemble_weights = {
+    "Collegejaar": [],
     "Programme": [],
     "Herkomst": [],
     "SARIMA_cumulative": [],
@@ -226,28 +274,52 @@ ensemble_weights = {
     "Prognose_ratio": [],
     "Average_ensemble_prediction": [],
 }
-for herkomst in percentage_per_herkomst.keys():
-    temp_data = weight_data[weight_data["Herkomst"] == herkomst]
-    temp_data = temp_data[temp_data["Percentage"] == percentage_per_herkomst[herkomst][0]]
-    temp_data = temp_data[temp_data["Second percentage"] == percentage_per_herkomst[herkomst][1]]
+for year in years:
+    year_temp_data = error_rates[error_rates["Collegejaar"] == year]
+    percentage_per_herkomst = {"EER": (), "NL": (), "Niet-EER": ()}
+    for herkomst in percentage_per_herkomst.keys():
+        temp_data = year_temp_data[year_temp_data["Herkomst"] == herkomst]
+        temp_data = temp_data[temp_data["MAE"] == temp_data["MAE"].min()]
+        percentage_per_herkomst[herkomst] = (
+            float(temp_data["Percentage"].iloc[0]),
+            float(temp_data["Second percentage"].iloc[0]),
+        )
 
-    for i, row in temp_data.iterrows():
-        ensemble_weights["Programme"].append(row["Programme"])
-        ensemble_weights["Herkomst"].append(row["Herkomst"])
+        temp_data = weight_data[
+            (weight_data["Herkomst"] == herkomst) & (weight_data["Collegejaar"] == year)
+        ]
+        temp_data = temp_data[temp_data["Percentage"] == percentage_per_herkomst[herkomst][0]]
+        temp_data = temp_data[
+            temp_data["Second percentage"] == percentage_per_herkomst[herkomst][1]
+        ]
 
-        average_ensemble_weight = 0.0
+        for i, row in temp_data.iterrows():
+            ensemble_weights["Collegejaar"].append(year)
+            ensemble_weights["Programme"].append(row["Programme"])
+            ensemble_weights["Herkomst"].append(row["Herkomst"])
 
-        MAEs = [row[f"MAE_{method}"] for method in methods]
-        sum_MAE = sum(MAEs)
+            average_ensemble_weight = 0.0
 
-        if sum_MAE != 1 or sum_MAE == 0:
-            average_ensemble_weight = 1.0
-            MAEs = [0.0] * len(methods)
+            MAEs = [row[f"MAE_{method}"] for method in methods]
+            sum_MAE = sum(MAEs)
 
-        for m in range(len(methods)):
-            ensemble_weights[methods[m]].append(MAEs[m])
+            if sum_MAE != 1 or sum_MAE == 0:
+                average_ensemble_weight = 1.0
+                MAEs = [0.0] * len(methods)
 
-        ensemble_weights["Average_ensemble_prediction"].append(average_ensemble_weight)
+            for m in range(len(methods)):
+                ensemble_weights[methods[m]].append(MAEs[m])
+
+            ensemble_weights["Average_ensemble_prediction"].append(average_ensemble_weight)
 
 ensemble_weights = pd.DataFrame(ensemble_weights)
+
+if os.path.isfile("configuration/ensemble_weights.xlsx"):
+    existing_ensemble_weights = pd.read_excel("configuration/ensemble_weights.xlsx")
+    existing_ensemble_weights = existing_ensemble_weights[
+        ~existing_ensemble_weights["Collegejaar"].isin(years)
+    ]
+    ensemble_weights = pd.concat([existing_ensemble_weights, ensemble_weights])
+    ensemble_weights = ensemble_weights.sort_values(by=["Collegejaar", "Programme", "Herkomst"])
+
 ensemble_weights.to_excel("configuration/ensemble_weights.xlsx", index=False)

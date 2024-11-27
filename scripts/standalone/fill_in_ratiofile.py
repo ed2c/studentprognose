@@ -1,6 +1,9 @@
-from load_data import load_configuration
 import os
 import pandas as pd
+import sys
+
+sys.path.insert(0, os.path.abspath(os.path.join(os.path.dirname(__file__), "..", "..")))
+from scripts.load_data import load_configuration
 
 
 class FillInRatioFile:
@@ -178,7 +181,7 @@ if __name__ == "__main__":
 
     new_data_ratios = fill_in_ratio_file.calculate_ratios_and_fill_in_dataframe(2025)
 
-    CWD = os.path.dirname(os.path.dirname(os.path.abspath(__file__)))
+    CWD = os.path.dirname(os.path.dirname(os.path.dirname(os.path.abspath(__file__))))
     outfile = os.path.join(CWD, "data/output/ratiobestand.xlsx")
 
     new_data_ratios.sort_values(

@@ -229,7 +229,6 @@ class Main:
                 self.data_distances,
                 self.configuration,
                 helpermethods_initialise_material,
-                self.years,
             )
 
         self.higher_years_dataholder = HigherYears(
