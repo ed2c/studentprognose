@@ -10,7 +10,7 @@ Zie een concreet voorbeeld van opleiding Artificial Intelligence van Radboud Uni
 *De groene lijn is het uiteindelijk aantal inschrijvingen in deze opleiding. De diverse modellen (paarse en gele lijnen) zijn vanaf maart (week 14) stabiel en de gele lijn zelfs vanaf het begin.* 
 </div>
 
-Zo kan een instelling dus per opleiding maanden van tevoren betrouwbaar inzicht krijgen in het uiteindelijke aantal studenten. Dit zorgt ervoor dat instellingen roosters, personele inzet en schaarse middelen doelmatig kunnen inzetten. Zie ook een [interview](https://www.voxweb.nl/nieuws/de-universiteit-heeft-nu-haar-eigen-glazen-bol-nieuw-model-voorspelt-toekomstige-instroom-van-studenten) met Amir over het model.
+Zo heeft een onderwijsinstelling per opleiding maanden van tevoren betrouwbaar inzicht in het uiteindelijke aantal studenten. Dit zorgt ervoor dat instellingen roosters, personele inzet en schaarse financiële middelen doelmatig kunnen inzetten. Zie ook een [interview](https://www.voxweb.nl/nieuws/de-universiteit-heeft-nu-haar-eigen-glazen-bol-nieuw-model-voorspelt-toekomstige-instroom-van-studenten) met Amir over het model.
 
 ## Meedoen met doorontwikkeling
 
